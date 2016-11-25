@@ -9,6 +9,8 @@ public class Node {
 	private int H;//从指定的方格移动到终点 B 的估算成本，只能横竖移动，不可斜角移动
 	private int F;//F=G+H
 	private Node father;//一个指向父节点的引用
+	//采用枚举类型来表示通路、起点、终点和障碍物
+	private Tag nodeTag;
 	
 	//包含的方法
 	/*
@@ -64,6 +66,14 @@ public class Node {
 
 	public void setFather(Node father) {
 		this.father = father;
+	}
+
+	public Tag getNodeTag() {
+		return nodeTag;
+	}
+
+	public void setNodeTag(Tag nodeTag) {
+		this.nodeTag = nodeTag;
 	}
 
 }
