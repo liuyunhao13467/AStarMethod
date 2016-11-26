@@ -320,12 +320,54 @@ public class Node {
 	}
 	
 	/*
-	 * 2. 向openlist中添加元素
+	 * 2. 计算G的值
+	 * @param Node node 要计算G值的节点
+	 * @return int 返回G值，同时，也将G值保存在了本节点的G字段中
 	 */
+	int calculateTheValueOfG(Node node){
+		int myValueOfG = 0;//本节点的G值，初始为0
+		//先获取本节点的father
+		Node fatherNode = node.getFather();
+		if(fatherNode == null){
+			System.err.println("该节点是起点。");
+		}
+		//再获取father节点的G值
+		int GValueOfFather = fatherNode.getG();
+		//计算自己的G值
+		int x = node.x;
+		int y = node.y;
+		int fatherX = fatherNode.x;
+		int fatherY = fatherNode.y;
+		//如果node位于fatherNode的上下左右四个位置，那么G值加10
+		if(((x == (fatherX - 1)) && (y == fatherY)) || ((x == fatherX) && (y == (fatherY + 1))) || ((x == (fatherX + 1)) && (y == fatherY)) || ((x == fatherX) && (y == (fatherY - 1)))){
+			myValueOfG = GValueOfFather + 10;
+			node.setG(myValueOfG);
+		}
+		//如果node位于fatherNode的左上、右上、左下、右下四个位置，那么G值加14
+		if(((x == (fatherX - 1)) && (y == (fatherY - 1))) || ((x == (fatherX - 1)) && (y == (fatherY + 1))) || ((x == (fatherX + 1)) && (y == (fatherY + 1))) || ((x == (fatherX + 1)) && (y == (fatherY - 1)))){
+			myValueOfG = GValueOfFather + 14;
+			node.setG(myValueOfG);
+		}
+		
+		return myValueOfG;
+	}
 	
 	/*
-	 * 3. 从openlist中删除元素
+	 * 3. 计算H值
+	 * @param Node mySelf, Node endPoint 本节点和终点
+	 * @return int 返回H值，同时将H值保存至本节点的H字段中
 	 */
+	int calculateTheValueOfH(Node mySelf, Node endPoint){
+		//先获取本节点的坐标和终点坐标
+		int x = mySelf.x;
+		int y = mySelf.y;
+		int endX = endPoint.x;
+		int endY = endPoint.y;
+		int myH = -1;//默认为-1，如果返回-1说明出现了什么错误
+		//计算本点到终点的开销
+		myH = (Math.abs(x - endX) + Math.abs(y - endY))*10 ;
+		return myH;
+	}
 	
 	/*
 	 * 4. 向closelist中添加元素
