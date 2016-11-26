@@ -42,30 +42,281 @@ public class Node {
 			System.out.println("当前点正常。\n");
 		}
 		
-		//（3）如果是正常点，先找到可能的子点
+		//（3）找到可能的子点
 		List<Node> possibleSons = new ArrayList<Node>();//这个list存储可能的sons
 		//先找特殊点：
 		if(((fatherX - 1) < 0) && ((fatherY - 1) < 0)){
-			//左上角
-		}else if((fatherX - 1) < 0){
-			//上边
+			//左上角；判断规则是：如果该点的坐标为（i，j），那么可能的children点为{（i，j+1）（i+1，j+1）（i+1，j）}
+			Node son1 = map.map[fatherX][fatherY+1].father = father;
+			Node son2 = map.map[fatherX+1][fatherY+1].father = father;
+			Node son3 = map.map[fatherX+1][fatherY].father = father;
+			//先加入可能的子点集合中
+			possibleSons.add(son1);
+			possibleSons.add(son2);
+			possibleSons.add(son3);
+			//还要注意这些可能的儿子点是否为墙或者是已经存在于closelist中的点
+			List<Node> tmpCloseList = map.closeList;//先获取map中的closelist，以作临时之用
+			//检查possibleSons中的元素是否存在于closelist中，如果存在就将其剔除出possibleSons
+			for(Node tmpCloseNode:tmpCloseList){
+				for(Node tmpPossibleSon:possibleSons){
+					if((tmpCloseNode.x == tmpPossibleSon.x) && (tmpCloseNode.y == tmpPossibleSon.y)){
+						possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+						tmpPossibleSon.father = null;//移除关系
+					}
+				}
+			}
+			//再检查这些可能的儿子点是否为墙，如果是，将其剔除出possibleSons
+			for(Node tmpPossibleSon:possibleSons){
+				if(tmpPossibleSon.getNodeTag() == Tag.WALL){
+					possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+					tmpPossibleSon.father = null;//移除关系
+				}
+			}
 		}else if(((fatherX - 1) < 0) && ((fatherY + 1) > (mapWidth - 1))){
-			//右上角
-		}else if((fatherY + 1) > (mapWidth - 1)){
-			//右边
+			//右上角；判断规则是：如果该坐标为(i,j)，那么可能的children点为：{(i,j-1)(i+1,j+1)(i+1,j)}
+			Node son2 = map.map[fatherX+1][fatherY+1].father = father;
+			Node son3 = map.map[fatherX+1][fatherY].father = father;
+			Node son5 = map.map[fatherX][fatherY-1].father = father;
+			//先加入可能的子点集合中
+			possibleSons.add(son5);
+			possibleSons.add(son2);
+			possibleSons.add(son3);
+			//还要注意这些可能的儿子点是否为墙或者是已经存在于closelist中的点
+			List<Node> tmpCloseList = map.closeList;//先获取map中的closelist，以作临时之用
+			//检查possibleSons中的元素是否存在于closelist中，如果存在就将其剔除出possibleSons
+			for(Node tmpCloseNode:tmpCloseList){
+				for(Node tmpPossibleSon:possibleSons){
+					if((tmpCloseNode.x == tmpPossibleSon.x) && (tmpCloseNode.y == tmpPossibleSon.y)){
+						possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+						tmpPossibleSon.father = null;//移除关系
+					}
+				}
+			}
+			//再检查这些可能的儿子点是否为墙，如果是，将其剔除出possibleSons
+			for(Node tmpPossibleSon:possibleSons){
+				if(tmpPossibleSon.getNodeTag() == Tag.WALL){
+					possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+					tmpPossibleSon.father = null;//移除关系
+				}
+			}
 		}else if(((fatherX + 1) > (mapLength - 1)) && ((fatherY + 1) > (mapWidth - 1))){
-			//右下角
-		}else if((fatherX + 1) > (mapLength - 1)){
-			//下边
+			//右下角；判断规则是：如果该坐标为(i,j)，那么可能的children点为：{(i-1,j-i)(i-1,j)(i,j-1)}
+			Node son5 = map.map[fatherX][fatherY-1].father = father;
+			Node son6 = map.map[fatherX-1][fatherY-1].father = father;
+			Node son7 = map.map[fatherX-1][fatherY].father = father;
+			//先加入可能的子点集合中
+			possibleSons.add(son5);
+			possibleSons.add(son6);
+			possibleSons.add(son7);
+			//还要注意这些可能的儿子点是否为墙或者是已经存在于closelist中的点
+			List<Node> tmpCloseList = map.closeList;//先获取map中的closelist，以作临时之用
+			//检查possibleSons中的元素是否存在于closelist中，如果存在就将其剔除出possibleSons
+			for(Node tmpCloseNode:tmpCloseList){
+				for(Node tmpPossibleSon:possibleSons){
+					if((tmpCloseNode.x == tmpPossibleSon.x) && (tmpCloseNode.y == tmpPossibleSon.y)){
+						possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+						tmpPossibleSon.father = null;//移除关系
+					}
+				}
+			}
+			//再检查这些可能的儿子点是否为墙，如果是，将其剔除出possibleSons
+			for(Node tmpPossibleSon:possibleSons){
+				if(tmpPossibleSon.getNodeTag() == Tag.WALL){
+					possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+					tmpPossibleSon.father = null;//移除关系
+				}
+			}
 		}else if(((fatherX + 1) > (mapLength - 1)) && ((fatherY - 1) < 0)){
-			//左下角
+			//左下角；判断规则是：如果该坐标为(i,j)，那么可能的children点为：{(i,j+1)(i-1,j+1)(i-1,j)}
+			Node son1 = map.map[fatherX][fatherY+1].father = father;
+			Node son7 = map.map[fatherX-1][fatherY].father = father;
+			Node son8 = map.map[fatherX-1][fatherY+1].father = father;
+			//先加入可能的子点集合中
+			possibleSons.add(son1);
+			possibleSons.add(son7);
+			possibleSons.add(son8);
+			//还要注意这些可能的儿子点是否为墙或者是已经存在于closelist中的点
+			List<Node> tmpCloseList = map.closeList;//先获取map中的closelist，以作临时之用
+			//检查possibleSons中的元素是否存在于closelist中，如果存在就将其剔除出possibleSons
+			for(Node tmpCloseNode:tmpCloseList){
+				for(Node tmpPossibleSon:possibleSons){
+					if((tmpCloseNode.x == tmpPossibleSon.x) && (tmpCloseNode.y == tmpPossibleSon.y)){
+						possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+						tmpPossibleSon.father = null;//移除关系
+					}
+				}
+			}
+			//再检查这些可能的儿子点是否为墙，如果是，将其剔除出possibleSons
+			for(Node tmpPossibleSon:possibleSons){
+				if(tmpPossibleSon.getNodeTag() == Tag.WALL){
+					possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+					tmpPossibleSon.father = null;//移除关系
+				}
+			}
+		}else if((fatherX - 1) < 0){
+			//上边；判断规则是：如果该坐标为(i,j)，那么可能的children点为：{(i,j-1)(i+1,j-1)(i+1,j)(i+1,j+1)(i,j+1)}
+			Node son1 = map.map[fatherX][fatherY+1].father = father;
+			Node son2 = map.map[fatherX+1][fatherY+1].father = father;
+			Node son3 = map.map[fatherX+1][fatherY].father = father;
+			Node son4 = map.map[fatherX+1][fatherY-1].father = father;
+			Node son5 = map.map[fatherX][fatherY-1].father = father;
+			//先加入可能的子点集合中
+			possibleSons.add(son1);
+			possibleSons.add(son2);
+			possibleSons.add(son3);
+			possibleSons.add(son4);
+			possibleSons.add(son5);
+			//还要注意这些可能的儿子点是否为墙或者是已经存在于closelist中的点
+			List<Node> tmpCloseList = map.closeList;//先获取map中的closelist，以作临时之用
+			//检查possibleSons中的元素是否存在于closelist中，如果存在就将其剔除出possibleSons
+			for(Node tmpCloseNode:tmpCloseList){
+				for(Node tmpPossibleSon:possibleSons){
+					if((tmpCloseNode.x == tmpPossibleSon.x) && (tmpCloseNode.y == tmpPossibleSon.y)){
+						possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+						tmpPossibleSon.father = null;//移除关系
+					}
+				}
+			}
+			//再检查这些可能的儿子点是否为墙，如果是，将其剔除出possibleSons
+			for(Node tmpPossibleSon:possibleSons){
+				if(tmpPossibleSon.getNodeTag() == Tag.WALL){
+					possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+					tmpPossibleSon.father = null;//移除关系
+				}
+			}
+		}else if((fatherY + 1) > (mapWidth - 1)){
+			//右边；判断规则是：如果该坐标为(i,j)，那么可能的children点为：{(i-1,j-1)(i-1,j)(i,j-1)(i+1,j-1)(i+1,j)}
+			Node son3 = map.map[fatherX+1][fatherY].father = father;
+			Node son4 = map.map[fatherX+1][fatherY-1].father = father;
+			Node son5 = map.map[fatherX][fatherY-1].father = father;
+			Node son6 = map.map[fatherX-1][fatherY-1].father = father;
+			Node son7 = map.map[fatherX-1][fatherY].father = father;
+			//先加入可能的子点集合中
+			possibleSons.add(son6);
+			possibleSons.add(son7);
+			possibleSons.add(son3);
+			possibleSons.add(son4);
+			possibleSons.add(son5);
+			//还要注意这些可能的儿子点是否为墙或者是已经存在于closelist中的点
+			List<Node> tmpCloseList = map.closeList;//先获取map中的closelist，以作临时之用
+			//检查possibleSons中的元素是否存在于closelist中，如果存在就将其剔除出possibleSons
+			for(Node tmpCloseNode:tmpCloseList){
+				for(Node tmpPossibleSon:possibleSons){
+					if((tmpCloseNode.x == tmpPossibleSon.x) && (tmpCloseNode.y == tmpPossibleSon.y)){
+						possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+						tmpPossibleSon.father = null;//移除关系
+					}
+				}
+			}
+			//再检查这些可能的儿子点是否为墙，如果是，将其剔除出possibleSons
+			for(Node tmpPossibleSon:possibleSons){
+				if(tmpPossibleSon.getNodeTag() == Tag.WALL){
+					possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+					tmpPossibleSon.father = null;//移除关系
+				}
+			}
+		}else if((fatherX + 1) > (mapLength - 1)){
+			//下边；判断规则是：如果该坐标为(i,j)，那么可能的children点为：{(i-1,j-1)(i-1,j)(i-1,j+1)(i,j-1)(i,j+1)}
+			Node son1 = map.map[fatherX][fatherY+1].father = father;
+			Node son5 = map.map[fatherX][fatherY-1].father = father;
+			Node son6 = map.map[fatherX-1][fatherY-1].father = father;
+			Node son7 = map.map[fatherX-1][fatherY].father = father;
+			Node son8 = map.map[fatherX-1][fatherY+1].father = father;
+			//先加入可能的子点集合中
+			possibleSons.add(son1);
+			possibleSons.add(son6);
+			possibleSons.add(son7);
+			possibleSons.add(son8);
+			possibleSons.add(son5);
+			//还要注意这些可能的儿子点是否为墙或者是已经存在于closelist中的点
+			List<Node> tmpCloseList = map.closeList;//先获取map中的closelist，以作临时之用
+			//检查possibleSons中的元素是否存在于closelist中，如果存在就将其剔除出possibleSons
+			for(Node tmpCloseNode:tmpCloseList){
+				for(Node tmpPossibleSon:possibleSons){
+					if((tmpCloseNode.x == tmpPossibleSon.x) && (tmpCloseNode.y == tmpPossibleSon.y)){
+						possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+						tmpPossibleSon.father = null;//移除关系
+					}
+				}
+			}
+			//再检查这些可能的儿子点是否为墙，如果是，将其剔除出possibleSons
+			for(Node tmpPossibleSon:possibleSons){
+				if(tmpPossibleSon.getNodeTag() == Tag.WALL){
+					possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+					tmpPossibleSon.father = null;//移除关系
+				}
+			}
 		}else if((fatherY + 1) < 0){
-			//左边
+			//左边；判断规则是：如果该坐标为(i,j)，那么可能的children点为：{(i-1,j)(i-1,j+1)(i,j+1)(i+1,j)(i+1,j+1)}
+			Node son1 = map.map[fatherX][fatherY+1].father = father;
+			Node son2 = map.map[fatherX+1][fatherY+1].father = father;
+			Node son3 = map.map[fatherX+1][fatherY].father = father;
+			Node son7 = map.map[fatherX-1][fatherY].father = father;
+			Node son8 = map.map[fatherX-1][fatherY+1].father = father;
+			//先加入可能的子点集合中
+			possibleSons.add(son1);
+			possibleSons.add(son2);
+			possibleSons.add(son3);
+			possibleSons.add(son7);
+			possibleSons.add(son8);
+			//还要注意这些可能的儿子点是否为墙或者是已经存在于closelist中的点
+			List<Node> tmpCloseList = map.closeList;//先获取map中的closelist，以作临时之用
+			//检查possibleSons中的元素是否存在于closelist中，如果存在就将其剔除出possibleSons
+			for(Node tmpCloseNode:tmpCloseList){
+				for(Node tmpPossibleSon:possibleSons){
+					if((tmpCloseNode.x == tmpPossibleSon.x) && (tmpCloseNode.y == tmpPossibleSon.y)){
+						possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+						tmpPossibleSon.father = null;//移除关系
+					}
+				}
+			}
+			//再检查这些可能的儿子点是否为墙，如果是，将其剔除出possibleSons
+			for(Node tmpPossibleSon:possibleSons){
+				if(tmpPossibleSon.getNodeTag() == Tag.WALL){
+					possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+					tmpPossibleSon.father = null;//移除关系
+				}
+			}
 		}else{
 			//其他正常点
+			Node son1 = map.map[fatherX][fatherY+1].father = father;
+			Node son2 = map.map[fatherX+1][fatherY+1].father = father;
+			Node son3 = map.map[fatherX+1][fatherY].father = father;
+			Node son4 = map.map[fatherX+1][fatherY-1].father = father;
+			Node son5 = map.map[fatherX][fatherY-1].father = father;
+			Node son6 = map.map[fatherX-1][fatherY-1].father = father;
+			Node son7 = map.map[fatherX-1][fatherY].father = father;
+			Node son8 = map.map[fatherX-1][fatherY+1].father = father;
+			//先加入可能的子点集合中
+			possibleSons.add(son1);
+			possibleSons.add(son2);
+			possibleSons.add(son3);
+			possibleSons.add(son4);
+			possibleSons.add(son5);
+			possibleSons.add(son6);
+			possibleSons.add(son7);
+			possibleSons.add(son8);
+			//还要注意这些可能的儿子点是否为墙或者是已经存在于closelist中的点
+			List<Node> tmpCloseList = map.closeList;//先获取map中的closelist，以作临时之用
+			//检查possibleSons中的元素是否存在于closelist中，如果存在就将其剔除出possibleSons
+			for(Node tmpCloseNode:tmpCloseList){
+				for(Node tmpPossibleSon:possibleSons){
+					if((tmpCloseNode.x == tmpPossibleSon.x) && (tmpCloseNode.y == tmpPossibleSon.y)){
+						possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+						tmpPossibleSon.father = null;//移除关系
+					}
+				}
+			}
+			//再检查这些可能的儿子点是否为墙，如果是，将其剔除出possibleSons
+			for(Node tmpPossibleSon:possibleSons){
+				if(tmpPossibleSon.getNodeTag() == Tag.WALL){
+					possibleSons.remove(tmpPossibleSon);//从possibleSons中移除
+					tmpPossibleSon.father = null;//移除关系
+				}
+			}
 		}
-		//建立关系
-		return null;
+		
+		return possibleSons;
 	}
 	
 	/*
