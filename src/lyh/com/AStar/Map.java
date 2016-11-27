@@ -26,6 +26,26 @@ public class Map {
 	//closelist
 	List<Node> closeList;
 	
+	/**
+	 * 在openlist中寻找F值最大的Node
+	 * @param Map map 
+	 * @return Node nodeWithLargestValueOfF
+	 */
+	Node findTheNodeWithLargestValueOfF(Map map){
+		Node nodeWithLargestValueOfF = new Node();
+		nodeWithLargestValueOfF.setF(-1);
+		for(Node tmpNode:map.getOpenList()){
+			if(tmpNode.getF() > nodeWithLargestValueOfF.getF()){
+				nodeWithLargestValueOfF = tmpNode;
+			}
+		}
+		Node largestNode = new Node(nodeWithLargestValueOfF);
+		return largestNode;
+	}
+	
+	/**
+	 * 默认构造函数
+	 */
 	public Map() {
 		//默认情况下，地图的长宽均为10
 		this.length = 10;
@@ -59,6 +79,25 @@ public class Map {
 				this.map[i][j] = tmpNode;
 			}
 		}
+	}
+	
+	/**
+	 * getter & setter
+	 */
+	public List<Node> getOpenList() {
+		return openList;
+	}
+
+	public void setOpenList(List<Node> openList) {
+		this.openList = openList;
+	}
+
+	public List<Node> getCloseList() {
+		return closeList;
+	}
+
+	public void setCloseList(List<Node> closeList) {
+		this.closeList = closeList;
 	}
 
 	public int[][] getAbstractMap() {
