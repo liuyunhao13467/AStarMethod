@@ -307,8 +307,11 @@ public class Node {
 	}
 	
 	/**
-	 * 8.
+	 * 8.继续搜索ContinuingTheSearch
+	 * @param Map map
+	 * @return Node
 	 */
+	
 	
 	/**
 	 * 元素的getter和setter
