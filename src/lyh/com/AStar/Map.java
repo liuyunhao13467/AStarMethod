@@ -44,6 +44,23 @@ public class Map {
 	}
 	
 	/**
+	 * 在openlist中寻找F最小的Node
+	 * @param Map map
+	 * @return Node nodeWithMinimumValueOfF
+	 */
+	Node findTheNodeWithMinmumValueOfF(Map map){
+		Node nodeWithMinmumValueOfF = new Node();
+		nodeWithMinmumValueOfF.setF(java.lang.Integer.MAX_VALUE);
+		for(Node tmpNode:map.getOpenList()){
+			if(tmpNode.getF() < nodeWithMinmumValueOfF.getF()){
+				nodeWithMinmumValueOfF = tmpNode;
+			}
+		}
+		Node minmumNode = new Node(nodeWithMinmumValueOfF);
+		return minmumNode;
+	}
+	
+	/**
 	 * 默认构造函数
 	 */
 	public Map() {

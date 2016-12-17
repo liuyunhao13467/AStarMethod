@@ -307,11 +307,31 @@ public class Node {
 	}
 	
 	/**
-	 * 8.继续搜索ContinuingTheSearch
+	 * 8.继续搜索keepSearching
 	 * @param Map map
 	 * @return Node
 	 */
+	void keepSearching(Map map){
+		//第一步，在openlist中找到F值最小的方格（节点）
+		Node minimumFNode = map.findTheNodeWithMinmumValueOfF(map);
+		//第二步，将其从openlist中移除，添加到closelist中
+		map.getOpenList().remove(minimumFNode);
+		map.getCloseList().add(minimumFNode);
+		//第三步，检查所有相邻的格子，排除掉所有非法格子，将合法的格子加入openlist中，并将本格作为相邻格子的父节点
+		List<Node> childrenNodes = findChildrenNodes(minimumFNode, map);
+		//第四步，如果某个相邻节点已经在openlist中，检查一下现在的路径是否更好
+	}
 	
+	/**
+	 * 9.将一些点加入openlist中
+	 * @param Map map, List<Node> nodeSet
+	 * @return null
+	 */
+	void addNodesToOpenlist(Map map, List<Node> nodeSet){
+		for(Node tmpNode : nodeSet){
+			map.getOpenList().add(tmpNode);
+		}
+	}
 	
 	/**
 	 * 元素的getter和setter
