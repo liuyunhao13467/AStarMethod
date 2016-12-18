@@ -312,14 +312,57 @@ public class Node {
 	 * @return Node
 	 */
 	void keepSearching(Map map){
-		//第一步，在openlist中找到F值最小的方格（节点）
+		/*第一步，在openlist中找到F值最小的方格（节点）*/
 		Node minimumFNode = map.findTheNodeWithMinmumValueOfF(map);
-		//第二步，将其从openlist中移除，添加到closelist中
+		
+		/*第二步，将其从openlist中移除，添加到closelist中*/
 		map.getOpenList().remove(minimumFNode);
 		map.getCloseList().add(minimumFNode);
-		//第三步，检查所有相邻的格子，排除掉所有非法格子，将合法的格子加入openlist中，并将本格作为相邻格子的父节点
-		List<Node> childrenNodes = findChildrenNodes(minimumFNode, map);
-		//第四步，如果某个相邻节点已经在openlist中，检查一下现在的路径是否更好
+		
+		/*第三步， 检查所有与它相邻的方格，忽略其中在closelist中或是不可走(unwalkable)的方格(比如墙，水，或是其他非法地形)，
+		 *如果方格不在openlsit中，则把它们加入到openlist中。
+		 *把我们选定的方格设置为这些新加入的方格的父亲。*/
+		//(1)先找到合法的邻接结点
+		List<Node> adjNodes = getAdjNodes(minimumFNode, map);
+		//(2)检查相邻节点是否存在于openlist中，得到不存在于openlist中的结点集和存在于openlist中的点集
+		List<Node> nodesNotInOpenlist = getNodesNotInOpenlistFromAdjnodes(adjNodes, map.getOpenList());
+		List<Node> nodesInOpenlist = getNodesInOpenlistFromAdjnodes(adjNodes, map.getOpenList());
+		//(3)将这些节点加入openlist中
+		addNodesToOpenlist(map, nodesNotInOpenlist);
+		//(4)将这些新加入openlist的节点（nodesNotInOpenlist）的父节点设置为本节点
+		setNodesFather(minimumFNode, nodesNotInOpenlist);
+		
+		/*第四步，如果某个相邻的方格已经在openlist中，则检查这条路径是否更优，
+		 *也就是说经由当前方格(我们选中的方格)到达那个方格是否具有更小的G值。
+		 *如果没有，不做任何操作。相反，如果G值更小，则把那个方格的父亲设为当前方格(我们选中的方格)，
+		 *然后重新计算那个方格的F值和G值。*/
+		//(1)找到那些已经存在于openlist中的相邻节点（相对于上一步中那些一开始不存在于openlist中的adjNodes来说的）
+		//在上一步中已找到
+		//(2)遍历nodesInOpenlist，对其中的每一个节点进行检查
+		int cost = 0;
+		for(Node tmpNode:nodesInOpenlist){
+			//先算出由当前点到被检测点的代价
+			cost = calculateTheCostBetweenTwoAdjNodes(tmpNode, minimumFNode);
+			//再计算通过当前点到待检测点的G值
+			int newG = minimumFNode.getG() + cost;
+			//对比新的G值和待检测点的G值
+			if(newG < tmpNode.getG()){
+				/*如果新的G值比原来的G值小:
+				 *则将被检测的点（tmpNode）的father设置为当前选中的方格（minimumFNode），
+				 *并且重新计算tmpNode的F&G*/
+				//(1)tmpNode的father设置为minimumFNode
+				tmpNode.setFather(minimumFNode);
+				//(2)重新计算tmpNode的F&G
+				tmpNode.setG(newG);
+				int newF = newG + tmpNode.getH();
+				tmpNode.setH(newF);
+			}else{
+				//不做任何操作
+				continue;
+			}
+		}
+		
+		
 	}
 	
 	/**
@@ -328,9 +371,253 @@ public class Node {
 	 * @return null
 	 */
 	void addNodesToOpenlist(Map map, List<Node> nodeSet){
+		if(nodeSet.isEmpty()){
+			return;
+		}
 		for(Node tmpNode : nodeSet){
 			map.getOpenList().add(tmpNode);
 		}
+	}
+	
+	/**
+	 * 10.判定一个结点是否在openlist中
+	 * @param List<Node> openlist, Node node
+	 * @return int
+	 */
+	int isInOpenlist(List<Node> openlist, Node node){
+		//在openlist中检查输入node的出现次数
+		int matchTimes = 0;
+		for(Node tmpNode:openlist){
+			if(isSameNode(tmpNode, node))
+				matchTimes++;
+		}
+		//返回matchTimes,如果这个值为0，那么说明传入的节点不在openlist中；
+		//如果为1，则说明已存在与openlist中；
+		//如果大于1，则说明openlist的维护出现错误；
+		//如果小于1，则说明本函数计算出错。
+		return matchTimes;
+	}
+	
+	/**
+	 * 11.判断两个Node是否为同一个
+	 * @param Node node1, Node node2
+	 * @return boolean
+	 */
+	boolean isSameNode(Node node1, Node node2){
+		//可能还要有一个合法性判断？
+		if((node1.x == node2.x) && (node1.y == node2.y)){
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * 12.获取一个结点的合法的相邻节点
+	 * @param Node mySelf, Map map
+	 * @return List<Node>
+	 */
+	List<Node> getAdjNodes(Node mySelf, Map map){
+		//（1）获取到本节点点的信息，以及地图的大致信息
+		int myX = mySelf.x;//获取父点的横坐标(i)，对应length
+		int myY = mySelf.y;//获取父点的纵坐标(j)，对应width
+		int mapLength = map.length;//获取地图的长度
+		int mapWidth = map.width;//获取地图的宽度
+		//（2）如果当前点是墙，或者本节点的坐标越界，则说明程序有错误
+		if(Node.isNodeIllegal(mySelf, map)){
+			System.err.println("当前点非法！");
+			return null;
+		}
+		//（3）找到可能的邻接点
+		List<Node> possibleAdjPoints = new ArrayList<Node>();//这个list存储可能的邻接点
+		//获取到father周围的8个点
+		Node adj1 = map.map[myX][myY+1];
+		Node adj2 = map.map[myX+1][myY+1];
+		Node adj3 = map.map[myX+1][myY];
+		Node adj4 = map.map[myX+1][myY-1];
+		Node adj5 = map.map[myX][myY-1];
+		Node adj6 = map.map[myX-1][myY-1];
+		Node adj7 = map.map[myX-1][myY];
+		Node adj8 = map.map[myX-1][myY+1];
+		//先找特殊点：
+		if(((myX - 1) < 0) && ((myY - 1) < 0)){
+			//左上角；判断规则是：如果该点的坐标为（i，j），那么可能的邻接点为{（i，j+1）（i+1，j+1）（i+1，j）}
+			//先加入可能的邻接点集合中
+			possibleAdjPoints.add(adj1);
+			possibleAdjPoints.add(adj2);
+			possibleAdjPoints.add(adj3);
+			//对本节点可能的邻接节点集合进行处理：清洗myPossibleAdjPoints中存在于closelist的点或是非法的点
+			washIllegalPointsInAdjPoints(possibleAdjPoints,map);
+		}else if(((myX - 1) < 0) && ((myY + 1) > (mapWidth - 1))){
+			//右上角；判断规则是：如果该坐标为(i,j)，那么可能的邻接点为：{(i,j-1)(i+1,j-1)(i+1,j)}
+			//先加入可能的邻接点集合中
+			possibleAdjPoints.add(adj3);
+			possibleAdjPoints.add(adj4);
+			possibleAdjPoints.add(adj5);
+			//对本节点可能的邻接节点集合进行处理：清洗myPossibleAdjPoints中存在于closelist的点或是非法的点
+			washIllegalPointsInAdjPoints(possibleAdjPoints,map);
+		}else if(((myX - 1) < 0) && ((myX + 1) <= (mapLength - 1)) && ((myY - 1) >= 0) && ((myY + 1) <= (mapWidth - 1))){
+			//上边；判断规则是：如果该坐标为(i,j)，那么可能的邻接点为：{(i,j-1)(i+1,j-1)(i+1,j)(i+1,j+1)(i,j+1)}
+			//先加入可能的邻接点集合中
+			possibleAdjPoints.add(adj1);
+			possibleAdjPoints.add(adj2);
+			possibleAdjPoints.add(adj3);
+			possibleAdjPoints.add(adj4);
+			possibleAdjPoints.add(adj5);
+			//对本节点可能的邻接节点集合进行处理：清洗myPossibleAdjPoints中存在于closelist的点或是非法的点
+			washIllegalPointsInAdjPoints(possibleAdjPoints,map);
+		}else if(((myX + 1) > (mapLength - 1)) && ((myY + 1) > (mapWidth - 1))){
+			//右下角；判断规则是：如果该坐标为(i,j)，那么可能的邻接点为：{(i-1,j-i)(i-1,j)(i,j-1)}
+			//先加入可能的邻接点集合中
+			possibleAdjPoints.add(adj5);
+			possibleAdjPoints.add(adj6);
+			possibleAdjPoints.add(adj7);
+			//对本节点可能的邻接节点集合进行处理：清洗myPossibleAdjPoints中存在于closelist的点或是非法的点
+			washIllegalPointsInAdjPoints(possibleAdjPoints,map);
+		}else if(((myY + 1) > (mapWidth - 1)) && ((myY - 1) >= 0) && ((myX - 1) >= 0) && ((myX + 1) <= (mapLength - 1))){
+			//右边；判断规则是：如果该坐标为(i,j)，那么可能的邻接点为：{(i-1,j-1)(i-1,j)(i,j-1)(i+1,j-1)(i+1,j)}
+			//先加入可能的邻接点集合中
+			possibleAdjPoints.add(adj3);
+			possibleAdjPoints.add(adj4);
+			possibleAdjPoints.add(adj5);
+			possibleAdjPoints.add(adj6);
+			possibleAdjPoints.add(adj7);
+			//对本节点可能的邻接节点集合进行处理：清洗myPossibleAdjPoints中存在于closelist的点或是非法的点
+			washIllegalPointsInAdjPoints(possibleAdjPoints,map);
+		}else if(((myX + 1) > (mapLength - 1)) && ((myY - 1) < 0)){
+			//左下角；判断规则是：如果该坐标为(i,j)，那么可能的邻接点为：{(i,j+1)(i-1,j+1)(i-1,j)}
+			//先加入可能的邻接点集合中
+			possibleAdjPoints.add(adj1);
+			possibleAdjPoints.add(adj7);
+			possibleAdjPoints.add(adj8);
+			//对本节点可能的邻接节点集合进行处理：清洗myPossibleAdjPoints中存在于closelist的点或是非法的点
+			washIllegalPointsInAdjPoints(possibleAdjPoints,map);
+		}else if(((myX + 1) > (mapLength - 1)) && ((myX - 1) >= 0) && ((myY + 1) <= (mapWidth - 1)) && ((myY - 1) >= 0)){
+			//下边；判断规则是：如果该坐标为(i,j)，那么可能的children点为：{(i-1,j-1)(i-1,j)(i-1,j+1)(i,j-1)(i,j+1)}
+			//先加入可能的邻接点集合中
+			possibleAdjPoints.add(adj1);
+			possibleAdjPoints.add(adj5);
+			possibleAdjPoints.add(adj6);
+			possibleAdjPoints.add(adj7);
+			possibleAdjPoints.add(adj8);
+			//对本节点可能的邻接节点集合进行处理：清洗myPossibleAdjPoints中存在于closelist的点或是非法的点
+			washIllegalPointsInAdjPoints(possibleAdjPoints,map);
+		}else if(((myY - 1) < 0) && ((myY + 1) <= (mapWidth - 1)) && ((myX + 1) <= (mapLength - 1)) && ((myX - 1) >= 0)){
+			//左边；判断规则是：如果该坐标为(i,j)，那么可能的邻接点为：{(i-1,j)(i-1,j+1)(i,j+1)(i+1,j)(i+1,j+1)}
+			//先加入可能的邻接点集合中
+			possibleAdjPoints.add(adj1);
+			possibleAdjPoints.add(adj2);
+			possibleAdjPoints.add(adj3);
+			possibleAdjPoints.add(adj7);
+			possibleAdjPoints.add(adj8);
+			//对本节点可能的邻接节点集合进行处理：清洗myPossibleAdjPoints中存在于closelist的点或是非法的点
+			washIllegalPointsInAdjPoints(possibleAdjPoints,map);
+		}else{
+			//其他正常点
+			possibleAdjPoints.add(adj1);
+			possibleAdjPoints.add(adj2);
+			possibleAdjPoints.add(adj3);
+			possibleAdjPoints.add(adj4);
+			possibleAdjPoints.add(adj5);
+			possibleAdjPoints.add(adj6);
+			possibleAdjPoints.add(adj7);
+			possibleAdjPoints.add(adj8);
+			//对本节点可能的邻接节点集合进行处理：清洗myPossibleAdjPoints中存在于closelist的点或是非法的点
+			washIllegalPointsInAdjPoints(possibleAdjPoints,map);
+		}
+		return possibleAdjPoints;
+	}
+	
+	/**
+	 *13.检查相邻节点是否存在于openlist中，返回那些不存在于openlist中的结点们
+	 *@param List<Node> adjNodes, List<Node> openlist
+	 *@return List<Node>
+	 */
+	List<Node> getNodesNotInOpenlistFromAdjnodes(List<Node> adjNodes, List<Node> openlist){
+		//返回值的数据结构
+		List<Node> nodesNotInOpenlist = new ArrayList<Node>();
+		//查找
+		for(Node tmpAdjNode:adjNodes){
+			//这里还要加上合法性判断？
+			//若该点不存在于openlist中，则加入nodesNotInOpenlist
+			if(isInOpenlist(openlist, tmpAdjNode) == 0){
+				nodesNotInOpenlist.add(tmpAdjNode);
+			}
+		}
+		return nodesNotInOpenlist;
+	}
+	
+	/**
+	 *14.将一些节点的父节点设置为某个节点
+	 *@param Node father, List<Node> nodes
+	 *@return void
+	 */
+	void setNodesFather(Node father, List<Node> nodes){
+		if(nodes.isEmpty())
+			return;
+		for(Node tmpNode:nodes){
+			tmpNode.setFather(father);
+		}
+	}
+	
+	
+	/**
+	 *15. 检查相邻节点是否存在于openlist中，返回那些存在于openlist中的结点们
+	 *@param List<Node> adjNodes, List<Node> openlist
+	 *@return List<Node>
+	 */
+	List<Node> getNodesInOpenlistFromAdjnodes(List<Node> adjNodes, List<Node> openlist){
+		//返回值的数据结构
+		List<Node> nodesInOpenlist = new ArrayList<Node>();
+		//查找
+		for(Node tmpAdjNode:adjNodes){
+			//这里还要加上合法性判断？
+			//若该点存在于openlist中，则加入nodesInOpenlist
+			if(isInOpenlist(openlist, tmpAdjNode) == 1){
+				nodesInOpenlist.add(tmpAdjNode);
+			}
+		}
+		return nodesInOpenlist;
+	}
+	
+	/**
+	 * 16. 计算相邻两点之间的代价
+	 */
+	int calculateTheCostBetweenTwoAdjNodes(Node node1, Node node2){
+		int cost = 0;
+		//1.获取相邻两点的的坐标
+		int x1 = node1.x;
+		int y1 = node1.y;
+		int x2 = node2.x;
+		int y2 = node2.y;
+		//2.判定几种情况
+		if((x1 == x2) && ((y1-y2) == 1)){
+			//node1在node2右边
+			cost = 10;
+		}else if((x1 == x2) && ((y1-y2) == -1)){
+			//node1在node2左边
+			cost = 10;
+		}else if(((x1-x2) == 1) && (y1 == y2)){
+			//node1在node2下边
+			cost = 10;
+		}else if(((x1-x2) == -1) && (y1 == y2)){
+			//node1在node2上边
+			cost = 10;
+		}else if(((x1-x2) == 1) && ((y1-y2) == 1)){
+			//node1在node2右下方
+			cost = 14;
+		}else if(((x1-x2) == -1) && ((y1-y2) == 1)){
+			//node1在node2右上方
+			cost = 14;
+		}else if(((x1-x2) == 1) && ((y1-y2) == -1)){
+			//node1在node2左下方
+			cost = 14;
+		}else if(((x1-x2) == -1) && ((y1-y2) == -1)){
+			//node1在node2左上方
+			cost = 14;
+		}else{
+			cost = 0;
+		}
+		return cost;
 	}
 	
 	/**
