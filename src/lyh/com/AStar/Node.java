@@ -621,6 +621,33 @@ public class Node {
 	}
 	
 	/**
+	 * 17. 检查终点是否进入openlist中
+	 * @param List<Node> openlist
+	 * @return boolean
+	 */
+	boolean checkEndPointInOpenlist(List<Node> openlist){
+		for(Node tmpNode:openlist){
+			if(tmpNode.nodeTag == Tag.END){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * 18. 从endPoint回溯查找路径
+	 */
+	void findBestWay(Node endPoint){
+		DoubleLinkList<Node> bestWay = new DoubleLinkList<Node>();
+		if(endPoint.getFather() != null){
+			//若存在前一个结点就回溯
+			
+		}else{
+			//若不存在说明不存在路径
+		}
+	}
+	
+	/**
 	 * 元素的getter和setter
 	 */
 	public int getG() {
